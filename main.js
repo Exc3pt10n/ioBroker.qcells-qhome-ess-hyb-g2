@@ -38,7 +38,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
         //Reset Trigger initialisieren
         globalThis.resetMeterReadings = false;
-        var interval = Adapter.config.uptInterval * 1000;
+        var interval = this.config.uptInterval * 1000;
 
         //Daten abrufen
         //try {
