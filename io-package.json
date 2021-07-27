@@ -75,7 +75,7 @@
         "hostname": "qcells",
         "batCapacity": 4,
         "avgDuration": 30,
-        "uptIntervall": 1,
+        "uptInterval": 1,
         "pSell": 0.0864,
         "pBuy": 0.2386,
         "saveMeterValuesToDb": false,

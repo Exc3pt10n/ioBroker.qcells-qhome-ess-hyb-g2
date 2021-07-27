@@ -38,6 +38,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
         //Reset Trigger initialisieren
         globalThis.resetMeterReadings = false;
+        var interval = adapter.config.uptInterval * 1000; 
 
         //Daten abrufen
         //try {
@@ -108,7 +109,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     //Tageswerte aktualisieren
                     this.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
                 });
-            }, adapter.config.uptIntervall * 1000);
+            }, interval);
 
             global.job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
         //} catch (ex) {
