@@ -44,7 +44,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             //Daten abrufen
             global.main_interval = setInterval(function () {
                 //URL
-                var urlAPI = 'http://' + this.config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
+                var urlAPI = 'http://' + adapter.config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
 
                 try {
                     //Daten abrufen
@@ -54,7 +54,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
                         //Batterieladung in kWh berechnen
                         var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
-                        var BtCap = this.config.batCapacity * BtSoc / 100;
+                        var BtCap = adapter.config.batCapacity * BtSoc / 100;
 
                         //Verbleibende Batterielaufzeit berechnen
                         var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
@@ -79,7 +79,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                                 break;
                             //Laden
                             case 1:
-                                BtLast = Math.round((this.config.batCapacity - BtCap) / BtPw * 60);
+                                BtLast = Math.round((adapter.config.batCapacity - BtCap) / BtPw * 60);
                                 break;
                             //Geladen
                             case 2:
@@ -114,7 +114,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     this.log.error(ex.message);
                     return;
                 };
-            }, this.config.uptIntervall * 1000);
+            }, adapter.config.uptIntervall * 1000);
 
             global.job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
         } catch (e) {
@@ -170,7 +170,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         //Wenn aktueller Bedarf > 0 ist
         if (ConsPw > 0) {
             //Wenn Zeitraum erfüllt, erstes Element löschen
-            while (ConsData.length >= (this.config.avgDuration * 60 / this.config.uptIntervall)) {
+            while (ConsData.length >= (adapter.config.avgDuration * 60 / adapter.config.uptIntervall)) {
                 ConsData.shift();
             };
 
@@ -204,7 +204,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         if (global.resetMeterReadings) {
             global.resetMeterReadings = false;
 
-            if (this.config.saveMeterValuesToDb) {
+            if (adapter.config.saveMeterValuesToDb) {
                 this.save_Meter_Values_to_db(TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged);
             };
 
@@ -215,33 +215,33 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             TodayDischarged = 0;
         }
 
-        TodayGen += (PvPw / (60 * 60)) * this.config.uptIntervall;
+        TodayGen += (PvPw / (60 * 60)) * adapter.config.uptIntervall;
 
         switch (GridStusCd) {
             //Demand
             case 0:
-                TodayDemand += (GridPw / (60 * 60)) * this.config.uptIntervall;
+                TodayDemand += (GridPw / (60 * 60)) * adapter.config.uptIntervall;
                 break;
             //FeedIn
             case 1:
-                TodayFeedIn += (GridPw / (60 * 60)) * this.config.uptIntervall;
+                TodayFeedIn += (GridPw / (60 * 60)) * adapter.config.uptIntervall;
                 break;
         }
 
         switch (BtStusCd) {
             //Entladen
             case 0:
-                TodayDischarged += (BtPw / (60 * 60)) * this.config.uptIntervall;
+                TodayDischarged += (BtPw / (60 * 60)) * adapter.config.uptIntervall;
                 break;
             //Laden
             case 1:
-                TodayCharged += (BtPw / (60 * 60)) * this.config.uptIntervall;
+                TodayCharged += (BtPw / (60 * 60)) * adapter.config.uptIntervall;
                 break;
         }
 
         //Kosten/Erlöse berechnen
-        var TodayCost = TodayDemand * this.config.pBuy;
-        var TodayEarn = TodayFeedIn * this.config.pSell;
+        var TodayCost = TodayDemand * adapter.config.pBuy;
+        var TodayEarn = TodayFeedIn * adapter.config.pSell;
 
         this.SetState('TodayGen', { val: TodayGen, ack: true });
         this.SetState('TodayDemand', { val: TodayDemand, ack: true });
@@ -259,9 +259,9 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Datenbanktabelle anlegen
     create_db_table() {
-        var qry = 'CREATE TABLE IF NOT EXISTS ' + this.config.dbName + '.' + this.config.dbTable + ' ( Timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, TodayGen float NOT NULL, TodayDemand float NOT NULL, TodayFeedIn float NOT NULL, TodayCharged float NOT NULL, TodayDischarged float NOT NULL, PRIMARY KEY (timestamp) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
+        var qry = 'CREATE TABLE IF NOT EXISTS ' + adapter.config.dbName + '.' + adapter.config.dbTable + ' ( Timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, TodayGen float NOT NULL, TodayDemand float NOT NULL, TodayFeedIn float NOT NULL, TodayCharged float NOT NULL, TodayDischarged float NOT NULL, PRIMARY KEY (timestamp) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
 
-        this.sendTo(this.config.SQL_Instanz, 'query', qry, function (result) {
+        this.sendTo(adapter.config.SQL_Instanz, 'query', qry, function (result) {
             if (result.error) {
                 this.log.warn(result.error)
             } else {
@@ -272,9 +272,9 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Zählerstände in SQL-Datenbank speichern
     save_Meter_Values_to_db(TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged) {
-        var qry = 'INSERT INTO ' + this.config.dbName + '.' + this.config.dbTable + ' ( TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged ) VALUES ( ' + TodayGen + ', ' + TodayDemand + ', ' + TodayFeedIn + ', ' + TodayCharged + ', ' + TodayDischarged + ' );';
+        var qry = 'INSERT INTO ' + adapter.config.dbName + '.' + adapter.config.dbTable + ' ( TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged ) VALUES ( ' + TodayGen + ', ' + TodayDemand + ', ' + TodayFeedIn + ', ' + TodayCharged + ', ' + TodayDischarged + ' );';
 
-        this.sendTo(this.config.SQL_Instanz, 'query', qry, function (result) {
+        this.sendTo(adapter.config.SQL_Instanz, 'query', qry, function (result) {
             if (result.error) {
                 this.log.warn(result.error)
             } else {
