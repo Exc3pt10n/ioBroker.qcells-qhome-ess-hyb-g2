@@ -40,11 +40,87 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         globalThis.resetMeterReadings = false;
 
         //Methoden einplanen
-        global.main_interval = setInterval(function () {
-            this.Get_Data();
-        }, this.config.uptIntervall * 1000);
+        try {
+            //Daten abrufen
+            global.main_interval = setInterval(function () {
+                //URL
+                var urlAPI = 'http://' + this.config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
 
-        global.job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
+                try {
+                    //Daten abrufen
+                    request(urlAPI, function (err, state, body) {
+                        //JSON in Array umwandeln
+                        var arrValues = JSON.parse(body);
+
+                        //Batterieladung in kWh berechnen
+                        var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
+                        var BtCap = this.config.batCapacity * BtSoc / 100;
+
+                        //Verbleibende Batterielaufzeit berechnen
+                        var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
+                        var ConsPw = parseFloat(arrValues.ESSRealtimeStatus.ConsPw);
+                        var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
+
+                        //Tageswerte
+                        var PvPw = parseFloat(arrValues.ESSRealtimeStatus.PvPw);
+                        var GridStusCd = parseInt(arrValues.ESSRealtimeStatus.GridStusCd);
+                        var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
+
+                        //Durchschnittsbedarf berechnen
+                        var avgCons = this.calculate_avgCons(ConsPw);
+
+                        //Batterielaufzeit
+                        var BtLast = 0;
+
+                        switch (BtStusCd) {
+                            //Entladen
+                            case 0:
+                                BtLast = Math.round(BtCap / BtPw * 60);
+                                break;
+                            //Laden
+                            case 1:
+                                BtLast = Math.round((this.config.batCapacity - BtCap) / BtPw * 60);
+                                break;
+                            //Geladen
+                            case 2:
+                                BtLast = Math.round(BtCap / avgCons * 60);
+                                break;
+                        }
+
+                        //Datenpunkte aktualisieren
+                        this.setState('ColecTm', { val: this.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
+                        this.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
+                        this.setState('GridPw', { val: GridPw, ack: true });
+                        this.setState('ConsPw', { val: ConsPw, ack: true });
+                        this.setState('BtSoc', { val: BtSoc, ack: true });
+                        this.setState('PcsPw', arrValues.ESSRealtimeStatus.PcsPw);
+                        this.setState('AbsPcsPw', arrValues.ESSRealtimeStatus.AbsPcsPw);
+                        this.setState('PvPw', PvPw);
+                        this.setState('GridStusCd', GridStusCd);
+                        this.setState('BtStusCd', BtStusCd);
+                        this.setState('BtPw', BtPw);
+                        this.setState('OperStusCd', parseInt(arrValues.ESSRealtimeStatus.OperStusCd));
+                        this.setState('EmsOpMode', parseInt(arrValues.ESSRealtimeStatus.EmsOpMode));
+                        this.setState('RankPer', arrValues.ESSRealtimeStatus.RankPer);
+                        this.setState('ErrorCnt', arrValues.ESSRealtimeStatus.ErrorCnt);
+                        this.setState('BtCap', BtCap);
+                        this.setState('BtLast', BtLast);
+                        this.setState('AvgCons', avgCons);
+
+                        //Tageswerte aktualisieren
+                        this.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
+                    });
+                } catch (ex) {
+                    this.log.error(ex.message);
+                    return;
+                };
+            }, this.config.uptIntervall * 1000);
+
+            global.job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
+        } catch (e) {
+            this.log.error(e.message());
+        }
+
     }
 
     /**
@@ -74,81 +150,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             // The state was deleted
             this.log.info(`state ${id} deleted`);
         }
-    }
-
-    //Daten abrufen
-    Get_Data() {
-        //URL
-        var urlAPI = 'http://' + this.config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
-
-        try {
-            //Daten abrufen
-            request(urlAPI, function (err, state, body) {
-                //JSON in Array umwandeln
-                var arrValues = JSON.parse(body);
-
-                //Batterieladung in kWh berechnen
-                var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
-                var BtCap = this.config.batCapacity * BtSoc / 100;
-
-                //Verbleibende Batterielaufzeit berechnen
-                var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
-                var ConsPw = parseFloat(arrValues.ESSRealtimeStatus.ConsPw);
-                var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
-
-                //Tageswerte
-                var PvPw = parseFloat(arrValues.ESSRealtimeStatus.PvPw);
-                var GridStusCd = parseInt(arrValues.ESSRealtimeStatus.GridStusCd);
-                var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
-
-                //Durchschnittsbedarf berechnen
-                var avgCons = this.calculate_avgCons(ConsPw);
-
-                //Batterielaufzeit
-                var BtLast = 0;
-
-                switch (BtStusCd) {
-                    //Entladen
-                    case 0:
-                        BtLast = Math.round(BtCap / BtPw * 60);
-                        break;
-                    //Laden
-                    case 1:
-                        BtLast = Math.round((this.config.batCapacity - BtCap) / BtPw * 60);
-                        break;
-                    //Geladen
-                    case 2:
-                        BtLast = Math.round(BtCap / avgCons * 60);
-                        break;
-                }
-
-                //Datenpunkte aktualisieren
-                this.setState('ColecTm', { val: this.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
-                this.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
-                this.setState('GridPw', { val: GridPw, ack: true });
-                this.setState('ConsPw', { val: ConsPw, ack: true });
-                this.setState('BtSoc', { val: BtSoc, ack: true });
-                this.setState('PcsPw', arrValues.ESSRealtimeStatus.PcsPw);
-                this.setState('AbsPcsPw', arrValues.ESSRealtimeStatus.AbsPcsPw);
-                this.setState('PvPw', PvPw);
-                this.setState('GridStusCd', GridStusCd);
-                this.setState('BtStusCd', BtStusCd);
-                this.setState('BtPw', BtPw);
-                this.setState('OperStusCd', parseInt(arrValues.ESSRealtimeStatus.OperStusCd));
-                this.setState('EmsOpMode', parseInt(arrValues.ESSRealtimeStatus.EmsOpMode));
-                this.setState('RankPer', arrValues.ESSRealtimeStatus.RankPer);
-                this.setState('ErrorCnt', arrValues.ESSRealtimeStatus.ErrorCnt);
-                this.setState('BtCap', BtCap);
-                this.setState('BtLast', BtLast);
-                this.setState('AvgCons', avgCons);
-
-                //Tageswerte aktualisieren
-                this.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
-            });
-        } catch (ex) {
-            this.log.error(ex.message);
-            return;
-        };
     }
 
     //Setzt die Zählerstände zurück
