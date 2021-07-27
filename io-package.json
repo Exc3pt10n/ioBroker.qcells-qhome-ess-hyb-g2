@@ -1,0 +1,76 @@
+{
+    "common": {
+        "name": "qcells-qhome-ess-hyb-g2",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "Q.HOME+ ESS HYB-G2",
+        "titleLang": {
+            "en": "Q.HOME+ ESS HYB-G2",
+            "de": "Q.HOME+ ESS HYB-G2",
+            "ru": "Q.HOME + ESS HYB-G2",
+            "pt": "Q.HOME + ESS HYB-G2",
+            "nl": "Q.HOME+ ESS HYB-G2",
+            "fr": "Q.HOME+ ESS HYB-G2",
+            "it": "Q.HOME+ ESS HYB-G2",
+            "es": "Q.HOME + ESS HYB-G2",
+            "pl": "Q.HOME+ ESS HYB-G2",
+            "zh-cn": "Q.HOME+ ESS HYB-G2"
+        },
+        "desc": {
+            "en": "Get live data from your Q.Cells inverter",
+            "de": "Erhalten Sie Live-Daten von Ihrem Q.Cells Wechselrichter",
+            "ru": "Получайте данные в реальном времени со своего инвертора Q.Cells",
+            "pt": "Obtenha dados ao vivo do seu inversor Q.Cells",
+            "nl": "Ontvang live gegevens van uw Q.Cells-omvormer",
+            "fr": "Obtenez des données en direct de votre onduleur Q.Cells",
+            "it": "Ottieni dati in tempo reale dal tuo inverter Q.Cells",
+            "es": "Obtenga datos en vivo de su inversor Q.Cells",
+            "pl": "Uzyskaj dane na żywo z falownika Q.Cells",
+            "zh-cn": "从您的 Q.Cells 逆变器获取实时数据"
+        },
+        "authors": [
+            "Exc3pt10n <kontakt@jansesoft.de>"
+        ],
+        "keywords": [
+            "qcells",
+            "qhome",
+            "inverter"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "qcells-qhome-ess-hyb-g2.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/Exc3pt10n/ioBroker.qcells-qhome-ess-hyb-g2/master/admin/qcells-qhome-ess-hyb-g2.png",
+        "readme": "https://github.com/Exc3pt10n/ioBroker.qcells-qhome-ess-hyb-g2/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "energy",
+        "compact": true,
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=1.4.2"
+            }
+        ]
+    },
+    "native": {
+        "option1": true,
+        "option2": "42"
+    },
+    "objects": [],
+    "instanceObjects": []
+}
