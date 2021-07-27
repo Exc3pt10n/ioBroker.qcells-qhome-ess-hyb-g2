@@ -39,9 +39,8 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         //Reset Trigger initialisieren
         globalThis.resetMeterReadings = false;
 
-        //Methoden einplanen
-        try {
-            //Daten abrufen
+        //Daten abrufen
+        //try {
             global.main_interval = setInterval(function () {
                 //URL
                 var urlAPI = 'http://' + adapter.config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
@@ -112,9 +111,9 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }, adapter.config.uptIntervall * 1000);
 
             global.job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
-        } catch (ex) {
-            this.log.error(ex.message);
-        }
+        //} catch (ex) {
+        //    this.log.error(ex.message);
+        //}
     }
 
     /**
