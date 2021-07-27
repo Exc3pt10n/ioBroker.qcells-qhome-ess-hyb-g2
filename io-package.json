@@ -72,8 +72,18 @@
         ]
     },
     "native": {
-        "option1": true,
-        "option2": "42"
+        "hostname": "qcells",
+        "batCapacity": 4,
+        "avgDuration": 30,
+        "uptIntervall": 1,
+        "pSell": 0.0864,
+        "pBuy": 0.2386,
+        "saveMeterValuesToDb": false,
+        "dbName": "",
+        "dbTable": "",
+        "dbUser": "",
+        "dbPw": "",
+        "SQL_Instanz": ""
     },
     "objects": [],
     "instanceObjects": []
