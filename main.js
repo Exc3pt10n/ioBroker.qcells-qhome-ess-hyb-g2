@@ -262,13 +262,13 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var TodayCost = TodayDemand * config.pBuy;
         var TodayEarn = TodayFeedIn * config.pSell;
 
-        adapter.SetState('TodayGen', { val: TodayGen, ack: true });
-        adapter.SetState('TodayDemand', { val: TodayDemand, ack: true });
-        adapter.SetState('TodayFeedIn', { val: TodayFeedIn, ack: true });
-        adapter.SetState('TodayCharged', { val: TodayCharged, ack: true });
-        adapter.SetState('TodayDischarged', { val: TodayDischarged, ack: true });
-        adapter.SetState('TodayCost', { val: TodayCost, ack: true });
-        adapter.SetState('TodayEarn', { val: TodayEarn, ack: true });
+        adapter.setState('TodayGen', { val: TodayGen, ack: true });
+        adapter.setState('TodayDemand', { val: TodayDemand, ack: true });
+        adapter.setState('TodayFeedIn', { val: TodayFeedIn, ack: true });
+        adapter.setState('TodayCharged', { val: TodayCharged, ack: true });
+        adapter.setState('TodayDischarged', { val: TodayDischarged, ack: true });
+        adapter.setState('TodayCost', { val: TodayCost, ack: true });
+        adapter.setState('TodayEarn', { val: TodayEarn, ack: true });
     };
 
     //Convert Timestamp
