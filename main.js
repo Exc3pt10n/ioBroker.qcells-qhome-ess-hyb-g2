@@ -53,80 +53,80 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var interval = config.uptInterval * 1000;
 
         //Daten abrufen
-        //try {
-        main_interval = setInterval(function () {
-            //URL
-            var urlAPI = 'http://' + config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
+        try {
+            main_interval = setInterval(function () {
+                //URL
+                var urlAPI = 'http://' + config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
 
-            //Daten abrufen
-            request(urlAPI, function (err, state, body) {
-                //JSON in Array umwandeln
-                var arrValues = JSON.parse(body);
+                //Daten abrufen
+                request(urlAPI, function (err, state, body) {
+                    //JSON in Array umwandeln
+                    var arrValues = JSON.parse(body);
 
-                //Batterieladung in kWh berechnen
-                var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
-                var BtCap = config.batCapacity * BtSoc / 100;
+                    //Batterieladung in kWh berechnen
+                    var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
+                    var BtCap = config.batCapacity * BtSoc / 100;
 
-                //Verbleibende Batterielaufzeit berechnen
-                var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
-                var ConsPw = parseFloat(arrValues.ESSRealtimeStatus.ConsPw);
-                var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
+                    //Verbleibende Batterielaufzeit berechnen
+                    var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
+                    var ConsPw = parseFloat(arrValues.ESSRealtimeStatus.ConsPw);
+                    var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
 
-                //Tageswerte
-                var PvPw = parseFloat(arrValues.ESSRealtimeStatus.PvPw);
-                var GridStusCd = parseInt(arrValues.ESSRealtimeStatus.GridStusCd);
-                var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
+                    //Tageswerte
+                    var PvPw = parseFloat(arrValues.ESSRealtimeStatus.PvPw);
+                    var GridStusCd = parseInt(arrValues.ESSRealtimeStatus.GridStusCd);
+                    var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
 
-                //Durchschnittsbedarf berechnen
-                var avgCons = adapter.calculate_avgCons(ConsPw);
+                    //Durchschnittsbedarf berechnen
+                    var avgCons = adapter.calculate_avgCons(ConsPw);
 
-                //Batterielaufzeit
-                var BtLast = 0;
+                    //Batterielaufzeit
+                    var BtLast = 0;
 
-                switch (BtStusCd) {
-                    //Entladen
-                    case 0:
-                        BtLast = Math.round(BtCap / BtPw * 60);
-                        break;
-                    //Laden
-                    case 1:
-                        BtLast = Math.round((config.batCapacity - BtCap) / BtPw * 60);
-                        break;
-                    //Geladen
-                    case 2:
-                        BtLast = Math.round(BtCap / avgCons * 60);
-                        break;
-                }
+                    switch (BtStusCd) {
+                        //Entladen
+                        case 0:
+                            BtLast = Math.round(BtCap / BtPw * 60);
+                            break;
+                        //Laden
+                        case 1:
+                            BtLast = Math.round((config.batCapacity - BtCap) / BtPw * 60);
+                            break;
+                        //Geladen
+                        case 2:
+                            BtLast = Math.round(BtCap / avgCons * 60);
+                            break;
+                    }
 
-                //Datenpunkte aktualisieren
-                adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
-                adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
-                adapter.setState('GridPw', { val: GridPw, ack: true });
-                adapter.setState('ConsPw', { val: ConsPw, ack: true });
-                adapter.setState('BtSoc', { val: BtSoc, ack: true });
-                adapter.setState('PcsPw', arrValues.ESSRealtimeStatus.PcsPw);
-                adapter.setState('AbsPcsPw', arrValues.ESSRealtimeStatus.AbsPcsPw);
-                adapter.setState('PvPw', PvPw);
-                adapter.setState('GridStusCd', GridStusCd);
-                adapter.setState('BtStusCd', BtStusCd);
-                adapter.setState('BtPw', BtPw);
-                adapter.setState('OperStusCd', parseInt(arrValues.ESSRealtimeStatus.OperStusCd));
-                adapter.setState('EmsOpMode', parseInt(arrValues.ESSRealtimeStatus.EmsOpMode));
-                adapter.setState('RankPer', arrValues.ESSRealtimeStatus.RankPer);
-                adapter.setState('ErrorCnt', arrValues.ESSRealtimeStatus.ErrorCnt);
-                adapter.setState('BtCap', BtCap);
-                adapter.setState('BtLast', BtLast);
-                adapter.setState('AvgCons', avgCons);
+                    //Datenpunkte aktualisieren
+                    adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
+                    adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
+                    adapter.setState('GridPw', { val: GridPw, ack: true });
+                    adapter.setState('ConsPw', { val: ConsPw, ack: true });
+                    adapter.setState('BtSoc', { val: BtSoc, ack: true });
+                    adapter.setState('PcsPw', arrValues.ESSRealtimeStatus.PcsPw);
+                    adapter.setState('AbsPcsPw', arrValues.ESSRealtimeStatus.AbsPcsPw);
+                    adapter.setState('PvPw', PvPw);
+                    adapter.setState('GridStusCd', GridStusCd);
+                    adapter.setState('BtStusCd', BtStusCd);
+                    adapter.setState('BtPw', BtPw);
+                    adapter.setState('OperStusCd', parseInt(arrValues.ESSRealtimeStatus.OperStusCd));
+                    adapter.setState('EmsOpMode', parseInt(arrValues.ESSRealtimeStatus.EmsOpMode));
+                    adapter.setState('RankPer', arrValues.ESSRealtimeStatus.RankPer);
+                    adapter.setState('ErrorCnt', arrValues.ESSRealtimeStatus.ErrorCnt);
+                    adapter.setState('BtCap', BtCap);
+                    adapter.setState('BtLast', BtLast);
+                    adapter.setState('AvgCons', avgCons);
 
-                //Tageswerte aktualisieren
-                adapter.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
-            });
-        }, interval);
+                    //Tageswerte aktualisieren
+                    adapter.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
+                });
+            }, interval);
 
-        job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
-        //} catch (ex) {
-        //    adapter.log.error(ex.message);
-        //}
+            job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
+        } catch (ex) {
+            adapter.log.error(ex.message);
+        }
     }
 
     /**
@@ -165,10 +165,10 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Durchschnittsbdarf berechnen
     calculate_avgCons(ConsPw) {
-        var ConsData = adapter.getState('ConsData').val;
+        var ConsData = adapter.getState('ConsData');
 
         if (ConsData) {
-            ConsData = JSON.parse(ConsData);
+            ConsData = JSON.parse(ConsData.val);
         } else {
             ConsData = [];
         };
