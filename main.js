@@ -167,7 +167,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
     calculate_avgCons(ConsPw) {
         var ConsData = adapter.getState('ConsData');
 
-        if (ConsData) {
+        if (typeof ConsData !== 'undefined') {
             ConsData = JSON.parse(ConsData.val);
         } else {
             ConsData = [];
