@@ -74,16 +74,7 @@
     "native": {
         "hostname": "qcells",
         "batCapacity": 4,
-        "avgDuration": 30,
-        "uptInterval": 1,
-        "pSell": 0.0864,
-        "pBuy": 0.2386,
-        "saveMeterValuesToDb": false,
-        "dbName": "",
-        "dbTable": "",
-        "dbUser": "",
-        "dbPw": "",
-        "SQL_Instanz": ""
+        "uptInterval": 1
     },
     "objects": [],
     "instanceObjects": []
