@@ -165,7 +165,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Durchschnittsbdarf berechnen
     calculate_avgCons(ConsPw) {
-        var ConsData = this.getState('ConsData').val;
+        var ConsData = adapter.getState('ConsData').val;
 
         if (ConsData) {
             ConsData = JSON.parse(ConsData);
