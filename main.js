@@ -14,11 +14,11 @@ const request = require('request');
 const schedule = require('node-schedule');
 
 //global variables
+let adapter;
 let config;
 let main_interval;
 let job;
 let resetMeterReadings;
-let adapter;
 
 class QcellsQhomeEssHybG2 extends utils.Adapter {
     /**
@@ -43,7 +43,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         //load Config
         adapter = this;
         config = adapter.config;
-
 
         //Create States
         await adapter.create_states();
@@ -104,29 +103,29 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     adapter.setState('GridPw', { val: GridPw, ack: true });
                     adapter.setState('ConsPw', { val: ConsPw, ack: true });
                     adapter.setState('BtSoc', { val: BtSoc, ack: true });
-                    adapter.setState('PcsPw', arrValues.ESSRealtimeStatus.PcsPw);
-                    adapter.setState('AbsPcsPw', arrValues.ESSRealtimeStatus.AbsPcsPw);
-                    adapter.setState('PvPw', PvPw);
-                    adapter.setState('GridStusCd', GridStusCd);
-                    adapter.setState('BtStusCd', BtStusCd);
-                    adapter.setState('BtPw', BtPw);
-                    adapter.setState('OperStusCd', parseInt(arrValues.ESSRealtimeStatus.OperStusCd));
-                    adapter.setState('EmsOpMode', parseInt(arrValues.ESSRealtimeStatus.EmsOpMode));
-                    adapter.setState('RankPer', arrValues.ESSRealtimeStatus.RankPer);
-                    adapter.setState('ErrorCnt', arrValues.ESSRealtimeStatus.ErrorCnt);
-                    adapter.setState('BtCap', BtCap);
-                    adapter.setState('BtLast', BtLast);
-                    adapter.setState('AvgCons', avgCons);
+                    adapter.setState('PcsPw', { val: arrValues.ESSRealtimeStatus.PcsPw, ack: true });
+                    adapter.setState('AbsPcsPw', { val: arrValues.ESSRealtimeStatus.AbsPcsPw, ack: true });
+                    adapter.setState('PvPw', { val: PvPw, ack: true });
+                    adapter.setState('GridStusCd', { val: GridStusCd, ack: true });
+                    adapter.setState('BtStusCd', { val: BtStusCd, ack: true });
+                    adapter.setState('BtPw', { val: BtPw, ack: true });
+                    adapter.setState('OperStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.OperStusCd), ack: true });
+                    adapter.setState('EmsOpMode', { val: parseInt(arrValues.ESSRealtimeStatus.EmsOpMode), ack: true });
+                    adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
+                    adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
+                    adapter.setState('BtCap', { val: BtCap, ack: true });
+                    adapter.setState('BtLast', { val: BtLast, ack: true });
+                    adapter.setState('AvgCons', { val: avgCons, ack: true });
 
                     //Tageswerte aktualisieren
                     adapter.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
                 });
             }, interval);
-
-            job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
         } catch (ex) {
             adapter.log.error(ex.message);
         }
+
+        job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
     }
 
     /**
@@ -165,18 +164,17 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Durchschnittsbdarf berechnen
     calculate_avgCons(ConsPw) {
+        var ConsData = [];
+
         try {
-            var ConsData = adapter.getState('ConsData').val;
+            ConsData = adapter.getState('ConsData').val;
+
+            if (ConsData) {
+                ConsData = JSON.parse(ConsData);
+            }
         } catch (ex) {
-            adapter.log.error(ex.message);
+            adapter.log.warn(ex.message);
         }
-
-
-        if (ConsData) {
-            ConsData = JSON.parse(ConsData);
-        } else {
-            ConsData = [];
-        };
 
         //Wenn aktueller Bedarf > 0 ist
         if (ConsPw > 0) {
@@ -205,14 +203,20 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Zählerstände aktualisieren
     update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw) {
+        var TodayGen = 0;
+        var TodayDemand = 0;
+        var TodayFeedIn = 0;
+        var TodayCharged = 0;
+        var TodayDischarged = 0;
+
         try {
-            var TodayGen = parseFloat(adapter.getState('TodayGen').val)
-            var TodayDemand = parseFloat(adapter.getState('TodayDemand').val);
-            var TodayFeedIn = parseFloat(adapter.getState('TodayFeedIn').val);
-            var TodayCharged = parseFloat(adapter.getState('TodayCharged').val);
-            var TodayDischarged = parseFloat(adapter.getState('TodayDischarged').val);
+            TodayGen = parseFloat(adapter.getState('TodayGen').val)
+            TodayDemand = parseFloat(adapter.getState('TodayDemand').val);
+            TodayFeedIn = parseFloat(adapter.getState('TodayFeedIn').val);
+            TodayCharged = parseFloat(adapter.getState('TodayCharged').val);
+            TodayDischarged = parseFloat(adapter.getState('TodayDischarged').val);
         } catch (ex) {
-            adapter.log.error(ex.message);
+            adapter.log.warn(ex.message);
         }
 
         //Zählerstände speichern und zurücksetzen
