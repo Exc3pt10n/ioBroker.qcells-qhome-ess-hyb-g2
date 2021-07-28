@@ -165,10 +165,15 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Durchschnittsbdarf berechnen
     calculate_avgCons(ConsPw) {
-        var ConsData = adapter.getState('ConsData');
+        try {
+            var ConsData = adapter.getState('ConsData').val;
+        } catch (ex) {
+            adapter.log.error(ex.message);
+        }
+
 
         if (ConsData) {
-            ConsData = JSON.parse(ConsData.val);
+            ConsData = JSON.parse(ConsData);
         } else {
             ConsData = [];
         };
@@ -200,11 +205,15 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Zählerstände aktualisieren
     update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw) {
-        var TodayGen = parseFloat(adapter.getState('TodayGen').val)
-        var TodayDemand = parseFloat(adapter.getState('TodayDemand').val);
-        var TodayFeedIn = parseFloat(adapter.getState('TodayFeedIn').val);
-        var TodayCharged = parseFloat(adapter.getState('TodayCharged').val);
-        var TodayDischarged = parseFloat(adapter.getState('TodayDischarged').val);
+        try {
+            var TodayGen = parseFloat(adapter.getState('TodayGen').val)
+            var TodayDemand = parseFloat(adapter.getState('TodayDemand').val);
+            var TodayFeedIn = parseFloat(adapter.getState('TodayFeedIn').val);
+            var TodayCharged = parseFloat(adapter.getState('TodayCharged').val);
+            var TodayDischarged = parseFloat(adapter.getState('TodayDischarged').val);
+        } catch (ex) {
+            adapter.log.error(ex.message);
+        }
 
         //Zählerstände speichern und zurücksetzen
         if (resetMeterReadings) {
