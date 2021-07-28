@@ -165,10 +165,10 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Durchschnittsbdarf berechnen
     calculate_avgCons(ConsPw) {
-        var ConsData = adapter.getState('ConsData').val;
+        var ConsData = adapter.getState('ConsData');
 
         if (ConsData) {
-            ConsData = JSON.parse(ConsData);
+            ConsData = JSON.parse(ConsData.val);
         } else {
             ConsData = [];
         };
@@ -380,7 +380,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Verbrauchswerte Durchschnittsverbrauch',
                 type: 'string',
-                def: '[]',
+                def: '',
                 unit: ''
             }
         });
