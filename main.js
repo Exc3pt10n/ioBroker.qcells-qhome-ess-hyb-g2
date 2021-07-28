@@ -168,7 +168,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
         try {
             adapter.log.warn('Versuche ConsData zu lesen..');
-            ConsData = adapter.getState('ConsData').val;
+            ConsData = adapter.getState(adapter.name + adapter.instance + 'ConsData').val;
 
             if (ConsData) {
                 ConsData = JSON.parse(ConsData);
