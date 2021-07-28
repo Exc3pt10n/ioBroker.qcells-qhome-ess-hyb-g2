@@ -167,6 +167,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var ConsData = [];
 
         try {
+            adapter.log.warn('Versuche ConsData zu lesen..');
             ConsData = adapter.getState('ConsData').val;
 
             if (ConsData) {
@@ -210,6 +211,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var TodayDischarged = 0;
 
         try {
+            adapter.log.warn('Versuche Tageswerte zu lesen..');
             TodayGen = parseFloat(adapter.getState('TodayGen').val)
             TodayDemand = parseFloat(adapter.getState('TodayDemand').val);
             TodayFeedIn = parseFloat(adapter.getState('TodayFeedIn').val);
