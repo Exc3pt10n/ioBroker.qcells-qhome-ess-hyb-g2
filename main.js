@@ -13,6 +13,12 @@ const utils = require('@iobroker/adapter-core');
 const request = require('request');
 const schedule = require('node-schedule');
 
+//global variables
+let config;
+let main_interval;
+let job;
+let resetMeterReadings;
+
 class QcellsQhomeEssHybG2 extends utils.Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -33,18 +39,21 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
+        //load Config
+        config = this.config;
+
         //Create States
         await this.create_states();
 
         //Reset Trigger initialisieren
-        globalThis.resetMeterReadings = false;
-        var interval = this.config.uptInterval * 1000;
+        resetMeterReadings = false;
+        var interval = config.uptInterval * 1000;
 
         //Daten abrufen
         //try {
-        global.main_interval = setInterval(function () {
+        main_interval = setInterval(function () {
             //URL
-            var urlAPI = 'http://' + Adapter.config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
+            var urlAPI = 'http://' + config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
 
             //Daten abrufen
             request(urlAPI, function (err, state, body) {
@@ -53,7 +62,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
                 //Batterieladung in kWh berechnen
                 var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
-                var BtCap = Adapter.config.batCapacity * BtSoc / 100;
+                var BtCap = config.batCapacity * BtSoc / 100;
 
                 //Verbleibende Batterielaufzeit berechnen
                 var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
@@ -78,7 +87,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         break;
                     //Laden
                     case 1:
-                        BtLast = Math.round((Adapter.config.batCapacity - BtCap) / BtPw * 60);
+                        BtLast = Math.round((config.batCapacity - BtCap) / BtPw * 60);
                         break;
                     //Geladen
                     case 2:
@@ -111,7 +120,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             });
         }, interval);
 
-        global.job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
+        job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
         //} catch (ex) {
         //    this.log.error(ex.message);
         //}
@@ -123,8 +132,8 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
      */
     onUnload(callback) {
         try {
-            clearInterval(global.main_interval)
-            globalThis.job.cancel();
+            clearInterval(main_interval)
+            job.cancel();
             callback();
         } catch (e) {
             callback();
@@ -148,7 +157,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Setzt die Zählerstände zurück
     reset_meter_readings() {
-        global.resetMeterReadings = true;
+        resetMeterReadings = true;
     }
 
     //Durchschnittsbdarf berechnen
@@ -164,7 +173,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         //Wenn aktueller Bedarf > 0 ist
         if (ConsPw > 0) {
             //Wenn Zeitraum erfüllt, erstes Element löschen
-            while (ConsData.length >= (Adapter.config.avgDuration * 60 / Adapter.config.uptIntervall)) {
+            while (ConsData.length >= (config.avgDuration * 60 / config.uptIntervall)) {
                 ConsData.shift();
             };
 
@@ -195,10 +204,10 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var TodayDischarged = parseFloat(this.getState('TodayDischarged').val);
 
         //Zählerstände speichern und zurücksetzen
-        if (global.resetMeterReadings) {
-            global.resetMeterReadings = false;
+        if (resetMeterReadings) {
+            resetMeterReadings = false;
 
-            if (Adapter.config.saveMeterValuesToDb) {
+            if (config.saveMeterValuesToDb) {
                 this.save_Meter_Values_to_db(TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged);
             };
 
@@ -209,33 +218,33 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             TodayDischarged = 0;
         }
 
-        TodayGen += (PvPw / (60 * 60)) * Adapter.config.uptIntervall;
+        TodayGen += (PvPw / (60 * 60)) * config.uptIntervall;
 
         switch (GridStusCd) {
             //Demand
             case 0:
-                TodayDemand += (GridPw / (60 * 60)) * Adapter.config.uptIntervall;
+                TodayDemand += (GridPw / (60 * 60)) * config.uptIntervall;
                 break;
             //FeedIn
             case 1:
-                TodayFeedIn += (GridPw / (60 * 60)) * Adapter.config.uptIntervall;
+                TodayFeedIn += (GridPw / (60 * 60)) * config.uptIntervall;
                 break;
         }
 
         switch (BtStusCd) {
             //Entladen
             case 0:
-                TodayDischarged += (BtPw / (60 * 60)) * Adapter.config.uptIntervall;
+                TodayDischarged += (BtPw / (60 * 60)) * config.uptIntervall;
                 break;
             //Laden
             case 1:
-                TodayCharged += (BtPw / (60 * 60)) * Adapter.config.uptIntervall;
+                TodayCharged += (BtPw / (60 * 60)) * config.uptIntervall;
                 break;
         }
 
         //Kosten/Erlöse berechnen
-        var TodayCost = TodayDemand * Adapter.config.pBuy;
-        var TodayEarn = TodayFeedIn * Adapter.config.pSell;
+        var TodayCost = TodayDemand * config.pBuy;
+        var TodayEarn = TodayFeedIn * config.pSell;
 
         this.SetState('TodayGen', { val: TodayGen, ack: true });
         this.SetState('TodayDemand', { val: TodayDemand, ack: true });
@@ -253,9 +262,9 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Datenbanktabelle anlegen
     create_db_table() {
-        var qry = 'CREATE TABLE IF NOT EXISTS ' + Adapter.config.dbName + '.' + Adapter.config.dbTable + ' ( Timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, TodayGen float NOT NULL, TodayDemand float NOT NULL, TodayFeedIn float NOT NULL, TodayCharged float NOT NULL, TodayDischarged float NOT NULL, PRIMARY KEY (timestamp) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
+        var qry = 'CREATE TABLE IF NOT EXISTS ' + config.dbName + '.' + config.dbTable + ' ( Timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, TodayGen float NOT NULL, TodayDemand float NOT NULL, TodayFeedIn float NOT NULL, TodayCharged float NOT NULL, TodayDischarged float NOT NULL, PRIMARY KEY (timestamp) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
 
-        this.sendTo(Adapter.config.SQL_Instanz, 'query', qry, function (result) {
+        this.sendTo(config.SQL_Instanz, 'query', qry, function (result) {
             if (result.error) {
                 this.log.warn(result.error)
             } else {
@@ -266,9 +275,9 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
     //Zählerstände in SQL-Datenbank speichern
     save_Meter_Values_to_db(TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged) {
-        var qry = 'INSERT INTO ' + Adapter.config.dbName + '.' + Adapter.config.dbTable + ' ( TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged ) VALUES ( ' + TodayGen + ', ' + TodayDemand + ', ' + TodayFeedIn + ', ' + TodayCharged + ', ' + TodayDischarged + ' );';
+        var qry = 'INSERT INTO ' + config.dbName + '.' + config.dbTable + ' ( TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged ) VALUES ( ' + TodayGen + ', ' + TodayDemand + ', ' + TodayFeedIn + ', ' + TodayCharged + ', ' + TodayDischarged + ' );';
 
-        this.sendTo(Adapter.config.SQL_Instanz, 'query', qry, function (result) {
+        this.sendTo(config.SQL_Instanz, 'query', qry, function (result) {
             if (result.error) {
                 this.log.warn(result.error)
             } else {
