@@ -168,7 +168,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var ConsData = adapter.getState('ConsData');
 
         if (ConsData) {
-            adapter.log.info(JSON.stringify(ConsData));
             ConsData = JSON.parse(ConsData.val);
         } else {
             ConsData = [];
