@@ -296,6 +296,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Wechselrichterleistung absolut',
                 type: 'number',
+                def: 0,
                 unit: 'kW'
             }
         });
@@ -305,6 +306,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Durchschnittsbedarf',
                 type: 'number',
+                def: 0,
                 unit: 'kW'
             }
         });
@@ -314,6 +316,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Batterie Kapazität',
                 type: 'number',
+                def: 0,
                 unit: 'kWh'
             }
         });
@@ -323,6 +326,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Restlaufzeit (laden/entladen)',
                 type: 'number',
+                def: 0,
                 unit: 'Min'
             }
         });
@@ -332,6 +336,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Batterieleistung',
                 type: 'number',
+                def: 0,
                 unit: 'kW'
             }
         });
@@ -341,6 +346,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Batterie Ladezustand',
                 type: 'number',
+                def: 0,
                 unit: '%'
             }
         });
@@ -350,7 +356,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Batteriestatuscode',
                 type: 'number',
-                unit: '%',
+                unit: '',
                 states: {
                     '0': 'Entladen',
                     '1': 'Laden',
@@ -364,6 +370,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Abfragezeitpunkt',
                 type: 'string',
+                def: '',
                 unit: ''
             }
         });
@@ -373,6 +380,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Verbrauchswerte Durchschnittsverbrauch',
                 type: 'string',
+                def: [],
                 unit: ''
             }
         });
@@ -382,6 +390,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Bedarf Leistung',
                 type: 'number',
+                def: 0,
                 unit: 'kW'
             }
         });
@@ -391,6 +400,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Bedarf Leistung',
                 type: 'number',
+                def: 0,
                 unit: ''
             }
         });
@@ -400,6 +410,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Anzahl Fehler',
                 type: 'number',
+                def: 0,
                 unit: ''
             }
         });
@@ -409,6 +420,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Netzleistung',
                 type: 'number',
+                def: 0,
                 unit: 'kW'
             }
         });
@@ -431,6 +443,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'OperStusCd',
                 type: 'number',
+                def: 0,
                 unit: ''
             }
         });
@@ -440,6 +453,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Wechselrichterleistung',
                 type: 'number',
+                def: 0,
                 unit: 'W'
             }
         });
@@ -449,6 +463,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'PowerOutletPw',
                 type: 'number',
+                def: 0,
                 unit: ''
             }
         });
@@ -458,6 +473,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Photovoltaikleistung',
                 type: 'number',
+                def: 0,
                 unit: 'kW'
             }
         });
@@ -476,6 +492,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Heute bezogen',
                 type: 'number',
+                def: 0,
                 unit: 'kWh'
             }
         });
@@ -485,6 +502,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Heute eingespeist',
                 type: 'number',
+                def: 0,
                 unit: 'kWh'
             }
         });
@@ -494,6 +512,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Heute generiert',
                 type: 'number',
+                def: 0,
                 unit: 'kWh'
             }
         });
@@ -503,6 +522,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Heute geladen',
                 type: 'number',
+                def: 0,
                 unit: 'kWh'
             }
         });
@@ -512,6 +532,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Heute entladen',
                 type: 'number',
+                def: 0,
                 unit: 'kWh'
             }
         });
@@ -521,6 +542,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Kosten Bezug',
                 type: 'number',
+                def: 0,
                 unit: 'Euro'
             }
         });
@@ -530,6 +552,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Erlös Verkauf',
                 type: 'number',
+                def: 0,
                 unit: 'Euro'
             }
         });
