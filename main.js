@@ -166,11 +166,13 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
     calculate_avgCons(ConsPw) {
         var ConsData = [];
 
-        adapter.getState('ConsData', function(err, result){
+        adapter.getState('ConsData', function (err, result) {
             if (err) {
                 adapter.log.error(err);
             } else {
-                ConsData = JSON.parse(result.val);
+                if (result.val !== '') {
+                    ConsData = JSON.parse(result.val);
+                }
             }
         });
 
