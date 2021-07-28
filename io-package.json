@@ -74,7 +74,10 @@
     "native": {
         "hostname": "qcells",
         "batCapacity": 4,
-        "uptInterval": 1
+        "uptInterval": 1,
+        "pSell": 0.0864,
+        "pBuy": 0.2386,
+        "daily_reset": true
     },
     "objects": [],
     "instanceObjects": []

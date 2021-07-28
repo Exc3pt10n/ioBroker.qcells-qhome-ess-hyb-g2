@@ -11,12 +11,20 @@ const utils = require('@iobroker/adapter-core');
 // Load your modules here, e.g.:
 // const fs = require("fs");
 const request = require('request');
+const schedule = require('node-schedule');
 
 //global variables
 let adapter;
 let config;
 let main_interval;
-let resetMeterReadings;
+let reset_job;
+
+//Today MeterReadings
+let TodayGen;
+let TodayDemand;
+let TodayFeedIn;
+let TodayCharged;
+let TodayDischarged;
 
 class QcellsQhomeEssHybG2 extends utils.Adapter {
     /**
@@ -45,9 +53,13 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         //Create States
         await adapter.create_states();
 
-        //Reset Trigger initialisieren
-        resetMeterReadings = false;
+        //Intervall berechnen
         var interval = config.uptInterval * 1000;
+
+        //Jeden Tag zurücksetzen?
+        if(config.daily_reset){
+            reset_job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
+        }
 
         //Daten abrufen
         try {
@@ -63,22 +75,50 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         //JSON in Array umwandeln
                         var arrValues = JSON.parse(body);
 
+                        //Tageszähler aktualisieren
+                        //Erforderliche Daten konvertieren
+                        var PvPw = parseFloat(arrValues.ESSRealtimeStatus.PvPw);
+                        var GridStusCd = parseInt(arrValues.ESSRealtimeStatus.GridStusCd);
+                        var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
+                        var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
+                        var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
+
+                        adapter.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
+
                         //Batterieladung in kWh berechnen
                         var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
                         var BtCap = config.batCapacity * BtSoc / 100;
 
+                        //Batterielaufzeit
+                        var BtLast = 0;
+
+                        switch (BtStusCd) {
+                            //Entladen
+                            case 0:
+                                BtLast = Math.round(BtCap / BtPw * 60);
+                                break;
+                            //Laden
+                            case 1:
+                                BtLast = Math.round((config.batCapacity - BtCap) / BtPw * 60);
+                                break;
+                            //Geladen
+                            case 2:
+                                BtLast = 0;
+                                break;
+                        }
+
                         //Datenpunkte aktualisieren
                         adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
                         adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
-                        adapter.setState('GridPw', { val: parseFloat(arrValues.ESSRealtimeStatus.GridPw), ack: true });
+                        adapter.setState('GridPw', { val: GridPw, ack: true });
                         adapter.setState('ConsPw', { val: parseFloat(arrValues.ESSRealtimeStatus.ConsPw), ack: true });
                         adapter.setState('BtSoc', { val: BtSoc, ack: true });
                         adapter.setState('PcsPw', { val: arrValues.ESSRealtimeStatus.PcsPw, ack: true });
                         adapter.setState('AbsPcsPw', { val: arrValues.ESSRealtimeStatus.AbsPcsPw, ack: true });
-                        adapter.setState('PvPw', { val: parseFloat(arrValues.ESSRealtimeStatus.PvPw), ack: true });
-                        adapter.setState('GridStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.GridStusCd), ack: true });
-                        adapter.setState('BtStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.BtStusCd), ack: true });
-                        adapter.setState('BtPw', { val: parseFloat(arrValues.ESSRealtimeStatus.BtPw), ack: true });
+                        adapter.setState('PvPw', { val: PvPw, ack: true });
+                        adapter.setState('GridStusCd', { val: GridStusCd, ack: true });
+                        adapter.setState('BtStusCd', { val: BtStusCd, ack: true });
+                        adapter.setState('BtPw', { val: BtPw, ack: true });
                         adapter.setState('OperStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.OperStusCd), ack: true });
                         adapter.setState('EmsOpMode', { val: parseInt(arrValues.ESSRealtimeStatus.EmsOpMode), ack: true });
                         adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
@@ -99,6 +139,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
     onUnload(callback) {
         try {
             clearInterval(main_interval)
+            reset_job.cancel();
             callback();
         } catch (e) {
             callback();
@@ -119,6 +160,53 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             this.log.info(`state ${id} deleted`);
         }
     }
+
+    reset_meter_readings() {
+        TodayGen = 0;
+        TodayDemand = 0;
+        TodayFeedIn = 0;
+        TodayCharged = 0;
+        TodayDischarged = 0;
+    }
+
+    //Zählerstände aktualisieren
+    update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw) {
+        TodayGen += (PvPw / (60 * 60)) * config.uptIntervall;
+
+        switch (GridStusCd) {
+            //Demand
+            case 0:
+                TodayDemand += (GridPw / (60 * 60)) * config.uptIntervall;
+                break;
+            //FeedIn
+            case 1:
+                TodayFeedIn += (GridPw / (60 * 60)) * config.uptIntervall;
+                break;
+        }
+
+        switch (BtStusCd) {
+            //Entladen
+            case 0:
+                TodayDischarged += (BtPw / (60 * 60)) * config.uptIntervall;
+                break;
+            //Laden
+            case 1:
+                TodayCharged += (BtPw / (60 * 60)) * config.uptIntervall;
+                break;
+        }
+
+        //Kosten/Erlöse berechnen
+        var TodayCost = TodayDemand * config.pBuy;
+        var TodayEarn = TodayFeedIn * config.pSell;
+
+        adapter.setState('TodayGen', { val: TodayGen, ack: true });
+        adapter.setState('TodayDemand', { val: TodayDemand, ack: true });
+        adapter.setState('TodayFeedIn', { val: TodayFeedIn, ack: true });
+        adapter.setState('TodayCharged', { val: TodayCharged, ack: true });
+        adapter.setState('TodayDischarged', { val: TodayDischarged, ack: true });
+        adapter.setState('TodayCost', { val: TodayCost, ack: true });
+        adapter.setState('TodayEarn', { val: TodayEarn, ack: true });
+    };
 
     //Convert Timestamp
     transform_Timestamp(input) {
@@ -178,6 +266,16 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     '1': 'Laden',
                     '2': 'Geladen'
                 }
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('BtLast', {
+            type: 'state',
+            common: {
+                name: 'Restlaufzeit (laden/entladen)',
+                type: 'number',
+                def: 0,
+                unit: 'Min'
             }
         });
 
@@ -291,6 +389,76 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 name: 'RankPer',
                 type: 'number',
                 unit: ''
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('TodayDemand', {
+            type: 'state',
+            common: {
+                name: 'Heute bezogen',
+                type: 'number',
+                def: 0,
+                unit: 'kWh'
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('TodayFeedIn', {
+            type: 'state',
+            common: {
+                name: 'Heute eingespeist',
+                type: 'number',
+                def: 0,
+                unit: 'kWh'
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('TodayGen', {
+            type: 'state',
+            common: {
+                name: 'Heute generiert',
+                type: 'number',
+                def: 0,
+                unit: 'kWh'
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('TodayCharged', {
+            type: 'state',
+            common: {
+                name: 'Heute geladen',
+                type: 'number',
+                def: 0,
+                unit: 'kWh'
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('TodayDischarged', {
+            type: 'state',
+            common: {
+                name: 'Heute entladen',
+                type: 'number',
+                def: 0,
+                unit: 'kWh'
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('TodayCost', {
+            type: 'state',
+            common: {
+                name: 'Kosten Bezug',
+                type: 'number',
+                def: 0,
+                unit: 'Euro'
+            }
+        });
+
+        await adapter.setObjectNotExistsAsync('TodayEarn', {
+            type: 'state',
+            common: {
+                name: 'Erlös Verkauf',
+                type: 'number',
+                def: 0,
+                unit: 'Euro'
             }
         });
 
