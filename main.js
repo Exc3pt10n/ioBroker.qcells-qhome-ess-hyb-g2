@@ -82,9 +82,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
                     adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
                     adapter.setState('BtCap', { val: BtCap, ack: true });
-
-                    //Tageswerte aktualisieren
-                    adapter.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
                 });
             }, interval);
         } catch (ex) {
