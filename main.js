@@ -173,7 +173,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 ConsData = JSON.parse(ConsData);
             }
         } catch (ex) {
-            adapter.log.warn(ex.message);
+            adapter.log.error(ex.message);
         }
 
         //Wenn aktueller Bedarf > 0 ist
@@ -216,7 +216,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             TodayCharged = parseFloat(adapter.getState('TodayCharged').val);
             TodayDischarged = parseFloat(adapter.getState('TodayDischarged').val);
         } catch (ex) {
-            adapter.log.warn(ex.message);
+            adapter.log.error(ex.message);
         }
 
         //Zählerstände speichern und zurücksetzen
