@@ -57,7 +57,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var interval = config.uptInterval * 1000;
 
         //Jeden Tag zurücksetzen?
-        if(config.daily_reset){
+        if (config.daily_reset) {
             reset_job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
         }
 
@@ -83,7 +83,34 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
                         var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
 
-                        adapter.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
+                        //Zählerstände aktualisieren
+                        TodayGen += (PvPw / (60 * 60)) * config.uptIntervall;
+
+                        switch (GridStusCd) {
+                            //Demand
+                            case 0:
+                                TodayDemand += (GridPw / (60 * 60)) * config.uptIntervall;
+                                break;
+                            //FeedIn
+                            case 1:
+                                TodayFeedIn += (GridPw / (60 * 60)) * config.uptIntervall;
+                                break;
+                        }
+
+                        switch (BtStusCd) {
+                            //Entladen
+                            case 0:
+                                TodayDischarged += (BtPw / (60 * 60)) * config.uptIntervall;
+                                break;
+                            //Laden
+                            case 1:
+                                TodayCharged += (BtPw / (60 * 60)) * config.uptIntervall;
+                                break;
+                        }
+
+                        //Kosten/Erlöse berechnen
+                        var TodayCost = TodayDemand * config.pBuy;
+                        var TodayEarn = TodayFeedIn * config.pSell;
 
                         //Batterieladung in kWh berechnen
                         var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
@@ -124,6 +151,14 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
                         adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
                         adapter.setState('BtCap', { val: BtCap, ack: true });
+                        adapter.setState('BtLast', { val: BtLast, ack: true });
+                        adapter.setState('TodayGen', { val: TodayGen, ack: true });
+                        adapter.setState('TodayDemand', { val: TodayDemand, ack: true });
+                        adapter.setState('TodayFeedIn', { val: TodayFeedIn, ack: true });
+                        adapter.setState('TodayCharged', { val: TodayCharged, ack: true });
+                        adapter.setState('TodayDischarged', { val: TodayDischarged, ack: true });
+                        adapter.setState('TodayCost', { val: TodayCost, ack: true });
+                        adapter.setState('TodayEarn', { val: TodayEarn, ack: true });
                     };
                 })
             }, interval);
@@ -168,45 +203,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         TodayCharged = 0;
         TodayDischarged = 0;
     }
-
-    //Zählerstände aktualisieren
-    update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw) {
-        TodayGen += (PvPw / (60 * 60)) * config.uptIntervall;
-
-        switch (GridStusCd) {
-            //Demand
-            case 0:
-                TodayDemand += (GridPw / (60 * 60)) * config.uptIntervall;
-                break;
-            //FeedIn
-            case 1:
-                TodayFeedIn += (GridPw / (60 * 60)) * config.uptIntervall;
-                break;
-        }
-
-        switch (BtStusCd) {
-            //Entladen
-            case 0:
-                TodayDischarged += (BtPw / (60 * 60)) * config.uptIntervall;
-                break;
-            //Laden
-            case 1:
-                TodayCharged += (BtPw / (60 * 60)) * config.uptIntervall;
-                break;
-        }
-
-        //Kosten/Erlöse berechnen
-        var TodayCost = TodayDemand * config.pBuy;
-        var TodayEarn = TodayFeedIn * config.pSell;
-
-        adapter.setState('TodayGen', { val: TodayGen, ack: true });
-        adapter.setState('TodayDemand', { val: TodayDemand, ack: true });
-        adapter.setState('TodayFeedIn', { val: TodayFeedIn, ack: true });
-        adapter.setState('TodayCharged', { val: TodayCharged, ack: true });
-        adapter.setState('TodayDischarged', { val: TodayDischarged, ack: true });
-        adapter.setState('TodayCost', { val: TodayCost, ack: true });
-        adapter.setState('TodayEarn', { val: TodayEarn, ack: true });
-    };
 
     //Convert Timestamp
     transform_Timestamp(input) {
