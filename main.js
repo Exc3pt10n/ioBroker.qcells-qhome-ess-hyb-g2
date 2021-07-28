@@ -380,7 +380,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Verbrauchswerte Durchschnittsverbrauch',
                 type: 'string',
-                def: [],
+                def: '[]',
                 unit: ''
             }
         });
@@ -430,7 +430,8 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'Netzstatuscode',
                 type: 'number',
-                unit: 'kW',
+                unit: '',
+                def: '',
                 states: {
                     '0': 'Bezug',
                     '1': 'Einspeisung'
@@ -443,7 +444,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             common: {
                 name: 'OperStusCd',
                 type: 'number',
-                def: 0,
+                def: '',
                 unit: ''
             }
         });
