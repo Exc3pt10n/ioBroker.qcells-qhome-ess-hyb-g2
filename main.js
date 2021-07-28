@@ -11,7 +11,6 @@ const utils = require('@iobroker/adapter-core');
 // Load your modules here, e.g.:
 // const fs = require("fs");
 const request = require('request');
-const schedule = require('node-schedule');
 
 //global variables
 let adapter;
@@ -58,31 +57,35 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
                 //Daten abrufen
                 request(urlAPI, function (err, state, body) {
-                    //JSON in Array umwandeln
-                    var arrValues = JSON.parse(body);
+                    if (err) {
+                        adapter.log.error(err);
+                    } else {
+                        //JSON in Array umwandeln
+                        var arrValues = JSON.parse(body);
 
-                    //Batterieladung in kWh berechnen
-                    var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
-                    var BtCap = config.batCapacity * BtSoc / 100;
+                        //Batterieladung in kWh berechnen
+                        var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
+                        var BtCap = config.batCapacity * BtSoc / 100;
 
-                    //Datenpunkte aktualisieren
-                    adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
-                    adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
-                    adapter.setState('GridPw', { val: parseFloat(arrValues.ESSRealtimeStatus.GridPw), ack: true });
-                    adapter.setState('ConsPw', { val: parseFloat(arrValues.ESSRealtimeStatus.ConsPw), ack: true });
-                    adapter.setState('BtSoc', { val: BtSoc, ack: true });
-                    adapter.setState('PcsPw', { val: arrValues.ESSRealtimeStatus.PcsPw, ack: true });
-                    adapter.setState('AbsPcsPw', { val: arrValues.ESSRealtimeStatus.AbsPcsPw, ack: true });
-                    adapter.setState('PvPw', { val: parseFloat(arrValues.ESSRealtimeStatus.PvPw), ack: true });
-                    adapter.setState('GridStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.GridStusCd), ack: true });
-                    adapter.setState('BtStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.BtStusCd), ack: true });
-                    adapter.setState('BtPw', { val: parseFloat(arrValues.ESSRealtimeStatus.BtPw), ack: true });
-                    adapter.setState('OperStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.OperStusCd), ack: true });
-                    adapter.setState('EmsOpMode', { val: parseInt(arrValues.ESSRealtimeStatus.EmsOpMode), ack: true });
-                    adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
-                    adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
-                    adapter.setState('BtCap', { val: BtCap, ack: true });
-                });
+                        //Datenpunkte aktualisieren
+                        adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
+                        adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
+                        adapter.setState('GridPw', { val: parseFloat(arrValues.ESSRealtimeStatus.GridPw), ack: true });
+                        adapter.setState('ConsPw', { val: parseFloat(arrValues.ESSRealtimeStatus.ConsPw), ack: true });
+                        adapter.setState('BtSoc', { val: BtSoc, ack: true });
+                        adapter.setState('PcsPw', { val: arrValues.ESSRealtimeStatus.PcsPw, ack: true });
+                        adapter.setState('AbsPcsPw', { val: arrValues.ESSRealtimeStatus.AbsPcsPw, ack: true });
+                        adapter.setState('PvPw', { val: parseFloat(arrValues.ESSRealtimeStatus.PvPw), ack: true });
+                        adapter.setState('GridStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.GridStusCd), ack: true });
+                        adapter.setState('BtStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.BtStusCd), ack: true });
+                        adapter.setState('BtPw', { val: parseFloat(arrValues.ESSRealtimeStatus.BtPw), ack: true });
+                        adapter.setState('OperStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.OperStusCd), ack: true });
+                        adapter.setState('EmsOpMode', { val: parseInt(arrValues.ESSRealtimeStatus.EmsOpMode), ack: true });
+                        adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
+                        adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
+                        adapter.setState('BtCap', { val: BtCap, ack: true });
+                    };
+                })
             }, interval);
         } catch (ex) {
             adapter.log.error(ex.message);
@@ -96,7 +99,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
     onUnload(callback) {
         try {
             clearInterval(main_interval)
-            job.cancel();
             callback();
         } catch (e) {
             callback();
