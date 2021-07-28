@@ -18,6 +18,7 @@ let config;
 let main_interval;
 let job;
 let resetMeterReadings;
+let adapter;
 
 class QcellsQhomeEssHybG2 extends utils.Adapter {
     /**
@@ -40,10 +41,12 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
      */
     async onReady() {
         //load Config
-        config = this.config;
+        adapter = this;
+        config = adapter.config;
+
 
         //Create States
-        await this.create_states();
+        await adapter.create_states();
 
         //Reset Trigger initialisieren
         resetMeterReadings = false;
@@ -75,7 +78,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
 
                 //Durchschnittsbedarf berechnen
-                var avgCons = this.calculate_avgCons(ConsPw);
+                var avgCons = adapter.calculate_avgCons(ConsPw);
 
                 //Batterielaufzeit
                 var BtLast = 0;
@@ -96,33 +99,33 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 }
 
                 //Datenpunkte aktualisieren
-                this.setState('ColecTm', { val: this.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
-                this.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
-                this.setState('GridPw', { val: GridPw, ack: true });
-                this.setState('ConsPw', { val: ConsPw, ack: true });
-                this.setState('BtSoc', { val: BtSoc, ack: true });
-                this.setState('PcsPw', arrValues.ESSRealtimeStatus.PcsPw);
-                this.setState('AbsPcsPw', arrValues.ESSRealtimeStatus.AbsPcsPw);
-                this.setState('PvPw', PvPw);
-                this.setState('GridStusCd', GridStusCd);
-                this.setState('BtStusCd', BtStusCd);
-                this.setState('BtPw', BtPw);
-                this.setState('OperStusCd', parseInt(arrValues.ESSRealtimeStatus.OperStusCd));
-                this.setState('EmsOpMode', parseInt(arrValues.ESSRealtimeStatus.EmsOpMode));
-                this.setState('RankPer', arrValues.ESSRealtimeStatus.RankPer);
-                this.setState('ErrorCnt', arrValues.ESSRealtimeStatus.ErrorCnt);
-                this.setState('BtCap', BtCap);
-                this.setState('BtLast', BtLast);
-                this.setState('AvgCons', avgCons);
+                adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
+                adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
+                adapter.setState('GridPw', { val: GridPw, ack: true });
+                adapter.setState('ConsPw', { val: ConsPw, ack: true });
+                adapter.setState('BtSoc', { val: BtSoc, ack: true });
+                adapter.setState('PcsPw', arrValues.ESSRealtimeStatus.PcsPw);
+                adapter.setState('AbsPcsPw', arrValues.ESSRealtimeStatus.AbsPcsPw);
+                adapter.setState('PvPw', PvPw);
+                adapter.setState('GridStusCd', GridStusCd);
+                adapter.setState('BtStusCd', BtStusCd);
+                adapter.setState('BtPw', BtPw);
+                adapter.setState('OperStusCd', parseInt(arrValues.ESSRealtimeStatus.OperStusCd));
+                adapter.setState('EmsOpMode', parseInt(arrValues.ESSRealtimeStatus.EmsOpMode));
+                adapter.setState('RankPer', arrValues.ESSRealtimeStatus.RankPer);
+                adapter.setState('ErrorCnt', arrValues.ESSRealtimeStatus.ErrorCnt);
+                adapter.setState('BtCap', BtCap);
+                adapter.setState('BtLast', BtLast);
+                adapter.setState('AvgCons', avgCons);
 
                 //Tageswerte aktualisieren
-                this.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
+                adapter.update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw);
             });
         }, interval);
 
-        job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', this.reset_meter_readings);
+        job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
         //} catch (ex) {
-        //    this.log.error(ex.message);
+        //    adapter.log.error(ex.message);
         //}
     }
 
@@ -188,27 +191,27 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         };
 
         var avgCons = Math.round(totalCons / ConsData.length * 100) / 100;
-        this.log.debug('Summe Verbrauch: ' + Math.round(totalCons * 100) / 100 + '; Anzahl Werte: ' + ConsData.length + '; Dauer: ' + (Math.round((ConsData.length * 2 / 60) * 100) / 100) + ' Min' + '; Durchschnitt: ' + avgCons + '; aktueller Verbrauch: ' + ConsPw)
+        adapter.log.debug('Summe Verbrauch: ' + Math.round(totalCons * 100) / 100 + '; Anzahl Werte: ' + ConsData.length + '; Dauer: ' + (Math.round((ConsData.length * 2 / 60) * 100) / 100) + ' Min' + '; Durchschnitt: ' + avgCons + '; aktueller Verbrauch: ' + ConsPw)
 
         //Aktuelle Werte in Datenpunkten speichern
-        this.setState('ConsData', { val: JSON.stringify(ConsData), ack: true });
+        adapter.setState('ConsData', { val: JSON.stringify(ConsData), ack: true });
         return avgCons;
     };
 
     //Zählerstände aktualisieren
     update_meter_readings(PvPw, GridStusCd, GridPw, BtStusCd, BtPw) {
-        var TodayGen = parseFloat(this.getState('TodayGen').val)
-        var TodayDemand = parseFloat(this.getState('TodayDemand').val);
-        var TodayFeedIn = parseFloat(this.getState('TodayFeedIn').val);
-        var TodayCharged = parseFloat(this.getState('TodayCharged').val);
-        var TodayDischarged = parseFloat(this.getState('TodayDischarged').val);
+        var TodayGen = parseFloat(adapter.getState('TodayGen').val)
+        var TodayDemand = parseFloat(adapter.getState('TodayDemand').val);
+        var TodayFeedIn = parseFloat(adapter.getState('TodayFeedIn').val);
+        var TodayCharged = parseFloat(adapter.getState('TodayCharged').val);
+        var TodayDischarged = parseFloat(adapter.getState('TodayDischarged').val);
 
         //Zählerstände speichern und zurücksetzen
         if (resetMeterReadings) {
             resetMeterReadings = false;
 
             if (config.saveMeterValuesToDb) {
-                this.save_Meter_Values_to_db(TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged);
+                adapter.save_Meter_Values_to_db(TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged);
             };
 
             TodayGen = 0;
@@ -246,13 +249,13 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         var TodayCost = TodayDemand * config.pBuy;
         var TodayEarn = TodayFeedIn * config.pSell;
 
-        this.SetState('TodayGen', { val: TodayGen, ack: true });
-        this.SetState('TodayDemand', { val: TodayDemand, ack: true });
-        this.SetState('TodayFeedIn', { val: TodayFeedIn, ack: true });
-        this.SetState('TodayCharged', { val: TodayCharged, ack: true });
-        this.SetState('TodayDischarged', { val: TodayDischarged, ack: true });
-        this.SetState('TodayCost', { val: TodayCost, ack: true });
-        this.SetState('TodayEarn', { val: TodayEarn, ack: true });
+        adapter.SetState('TodayGen', { val: TodayGen, ack: true });
+        adapter.SetState('TodayDemand', { val: TodayDemand, ack: true });
+        adapter.SetState('TodayFeedIn', { val: TodayFeedIn, ack: true });
+        adapter.SetState('TodayCharged', { val: TodayCharged, ack: true });
+        adapter.SetState('TodayDischarged', { val: TodayDischarged, ack: true });
+        adapter.SetState('TodayCost', { val: TodayCost, ack: true });
+        adapter.SetState('TodayEarn', { val: TodayEarn, ack: true });
     };
 
     //Convert Timestamp
@@ -264,11 +267,11 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
     create_db_table() {
         var qry = 'CREATE TABLE IF NOT EXISTS ' + config.dbName + '.' + config.dbTable + ' ( Timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, TodayGen float NOT NULL, TodayDemand float NOT NULL, TodayFeedIn float NOT NULL, TodayCharged float NOT NULL, TodayDischarged float NOT NULL, PRIMARY KEY (timestamp) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
 
-        this.sendTo(config.SQL_Instanz, 'query', qry, function (result) {
+        adapter.sendTo(config.SQL_Instanz, 'query', qry, function (result) {
             if (result.error) {
-                this.log.warn(result.error)
+                adapter.log.warn(result.error)
             } else {
-                this.log.info('Rows: ' + JSON.stringify(result.result))
+                adapter.log.info('Rows: ' + JSON.stringify(result.result))
             }
         });
     }
@@ -277,18 +280,18 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
     save_Meter_Values_to_db(TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged) {
         var qry = 'INSERT INTO ' + config.dbName + '.' + config.dbTable + ' ( TodayGen, TodayDemand, TodayFeedIn, TodayCharged, TodayDischarged ) VALUES ( ' + TodayGen + ', ' + TodayDemand + ', ' + TodayFeedIn + ', ' + TodayCharged + ', ' + TodayDischarged + ' );';
 
-        this.sendTo(config.SQL_Instanz, 'query', qry, function (result) {
+        adapter.sendTo(config.SQL_Instanz, 'query', qry, function (result) {
             if (result.error) {
-                this.log.warn(result.error)
+                adapter.log.warn(result.error)
             } else {
-                this.log.debug('Rows: ' + JSON.stringify(result.result))
+                adapter.log.debug('Rows: ' + JSON.stringify(result.result))
             }
         });
     }
 
     //Create States
     async create_states() {
-        await this.setObjectNotExistsAsync('AbsPcsPw', {
+        await adapter.setObjectNotExistsAsync('AbsPcsPw', {
             type: 'state',
             common: {
                 name: 'Wechselrichterleistung absolut',
@@ -297,7 +300,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('AvgCons', {
+        await adapter.setObjectNotExistsAsync('AvgCons', {
             type: 'state',
             common: {
                 name: 'Durchschnittsbedarf',
@@ -306,7 +309,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('BtCap', {
+        await adapter.setObjectNotExistsAsync('BtCap', {
             type: 'state',
             common: {
                 name: 'Batterie Kapazität',
@@ -315,7 +318,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('BtLast', {
+        await adapter.setObjectNotExistsAsync('BtLast', {
             type: 'state',
             common: {
                 name: 'Restlaufzeit (laden/entladen)',
@@ -324,7 +327,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('BtPw', {
+        await adapter.setObjectNotExistsAsync('BtPw', {
             type: 'state',
             common: {
                 name: 'Batterieleistung',
@@ -333,7 +336,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('BtSoc', {
+        await adapter.setObjectNotExistsAsync('BtSoc', {
             type: 'state',
             common: {
                 name: 'Batterie Ladezustand',
@@ -342,7 +345,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('BtStusCd', {
+        await adapter.setObjectNotExistsAsync('BtStusCd', {
             type: 'state',
             common: {
                 name: 'Batteriestatuscode',
@@ -356,7 +359,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('ColecTm', {
+        await adapter.setObjectNotExistsAsync('ColecTm', {
             type: 'state',
             common: {
                 name: 'Abfragezeitpunkt',
@@ -365,7 +368,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('ConsData', {
+        await adapter.setObjectNotExistsAsync('ConsData', {
             type: 'state',
             common: {
                 name: 'Verbrauchswerte Durchschnittsverbrauch',
@@ -374,7 +377,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('ConsPw', {
+        await adapter.setObjectNotExistsAsync('ConsPw', {
             type: 'state',
             common: {
                 name: 'Bedarf Leistung',
@@ -383,7 +386,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('EmsOpMode', {
+        await adapter.setObjectNotExistsAsync('EmsOpMode', {
             type: 'state',
             common: {
                 name: 'Bedarf Leistung',
@@ -392,7 +395,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('ErrorCnt', {
+        await adapter.setObjectNotExistsAsync('ErrorCnt', {
             type: 'state',
             common: {
                 name: 'Anzahl Fehler',
@@ -401,7 +404,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('GridPw', {
+        await adapter.setObjectNotExistsAsync('GridPw', {
             type: 'state',
             common: {
                 name: 'Netzleistung',
@@ -410,7 +413,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('GridStusCd', {
+        await adapter.setObjectNotExistsAsync('GridStusCd', {
             type: 'state',
             common: {
                 name: 'Netzstatuscode',
@@ -423,7 +426,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('OperStusCd', {
+        await adapter.setObjectNotExistsAsync('OperStusCd', {
             type: 'state',
             common: {
                 name: 'OperStusCd',
@@ -432,7 +435,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('PcsPw', {
+        await adapter.setObjectNotExistsAsync('PcsPw', {
             type: 'state',
             common: {
                 name: 'Wechselrichterleistung',
@@ -441,7 +444,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('PowerOutletPw', {
+        await adapter.setObjectNotExistsAsync('PowerOutletPw', {
             type: 'state',
             common: {
                 name: 'PowerOutletPw',
@@ -450,7 +453,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('PvPw', {
+        await adapter.setObjectNotExistsAsync('PvPw', {
             type: 'state',
             common: {
                 name: 'Photovoltaikleistung',
@@ -459,7 +462,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('RankPer', {
+        await adapter.setObjectNotExistsAsync('RankPer', {
             type: 'state',
             common: {
                 name: 'RankPer',
@@ -468,7 +471,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('TodayDemand', {
+        await adapter.setObjectNotExistsAsync('TodayDemand', {
             type: 'state',
             common: {
                 name: 'Heute bezogen',
@@ -477,7 +480,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('TodayFeedIn', {
+        await adapter.setObjectNotExistsAsync('TodayFeedIn', {
             type: 'state',
             common: {
                 name: 'Heute eingespeist',
@@ -486,7 +489,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('TodayGen', {
+        await adapter.setObjectNotExistsAsync('TodayGen', {
             type: 'state',
             common: {
                 name: 'Heute generiert',
@@ -495,7 +498,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('TodayCharged', {
+        await adapter.setObjectNotExistsAsync('TodayCharged', {
             type: 'state',
             common: {
                 name: 'Heute geladen',
@@ -504,7 +507,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('TodayDischarged', {
+        await adapter.setObjectNotExistsAsync('TodayDischarged', {
             type: 'state',
             common: {
                 name: 'Heute entladen',
@@ -513,7 +516,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('TodayCost', {
+        await adapter.setObjectNotExistsAsync('TodayCost', {
             type: 'state',
             common: {
                 name: 'Kosten Bezug',
@@ -522,7 +525,7 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             }
         });
 
-        await this.setObjectNotExistsAsync('TodayEarn', {
+        await adapter.setObjectNotExistsAsync('TodayEarn', {
             type: 'state',
             common: {
                 name: 'Erlös Verkauf',
