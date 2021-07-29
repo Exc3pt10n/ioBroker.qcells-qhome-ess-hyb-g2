@@ -86,7 +86,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
                     adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
                     adapter.setState('BtCap', { val: BtCap, ack: true });
-                    adapter.setState('BtLast', { val: BtLast, ack: true });
                 })
             }, interval);
         } catch (ex) {
