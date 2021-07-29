@@ -42,6 +42,10 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         adapter = this;
         config = adapter.config;
 
+        if (config.hostname == '') { return };
+        if (config.uptInterval == '') { return };
+        if (config.batCapacity == '') { return };
+
         //Create States
         await adapter.create_states();
 
