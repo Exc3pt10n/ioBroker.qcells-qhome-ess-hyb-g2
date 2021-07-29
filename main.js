@@ -19,13 +19,6 @@ let config;
 let main_interval;
 let reset_job;
 
-//Today MeterReadings
-let TodayGen;
-let TodayDemand;
-let TodayFeedIn;
-let TodayCharged;
-let TodayDischarged;
-
 class QcellsQhomeEssHybG2 extends utils.Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -56,11 +49,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
         //Intervall berechnen
         var interval = config.uptInterval * 1000;
 
-        //Jeden Tag zurücksetzen?
-        if (config.daily_reset) {
-            reset_job = schedule.scheduleJob('{"time":{"exactTime":true,"start":"23:59"},"period":{"days":1}}', adapter.reset_meter_readings);
-        }
-
         //Daten abrufen
         try {
             main_interval = setInterval(function () {
@@ -82,6 +70,19 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
                         var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
                         var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
+
+                        //Tageszähler
+                        var TodayGen = adapter.getStateAsync('TodayGen');
+                        var TodayDemand = adapter.getStateAsync('TodayDemand');
+                        var TodayFeedIn = adapter.getStateAsync('TodayFeedIn');
+                        var TodayCharged = adapter.getStateAsync('TodayCharged');
+                        var TodayDischarged = adapter.getStateAsync('TodayDischarged');
+
+                        if (config.daily_reset) {
+
+                        } else {
+
+                        }
 
                         //Zählerstände aktualisieren
                         TodayGen += (PvPw / (60 * 60)) * config.uptIntervall;
@@ -194,14 +195,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
             // The state was deleted
             this.log.info(`state ${id} deleted`);
         }
-    }
-
-    reset_meter_readings() {
-        TodayGen = 0;
-        TodayDemand = 0;
-        TodayFeedIn = 0;
-        TodayCharged = 0;
-        TodayDischarged = 0;
     }
 
     //Convert Timestamp
