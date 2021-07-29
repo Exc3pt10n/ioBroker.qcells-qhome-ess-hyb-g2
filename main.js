@@ -78,11 +78,11 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         var TodayCharged = await adapter.getStateAsync('TodayCharged').val;
                         var TodayDischarged = await adapter.getStateAsync('TodayDischarged').val;
 
+                        if (typeof (TodayGen) == undefined) {
+                            TodayGen = 0;
+                        }
+
                         adapter.log.warn('TodayGen: ' + TodayGen);
-                        adapter.log.warn('TodayDemand: ' + TodayDemand);
-                        adapter.log.warn('TodayFeedIn: ' + TodayFeedIn);
-                        adapter.log.warn('TodayCharged: ' + TodayCharged);
-                        adapter.log.warn('TodayDischarged: ' + TodayDischarged);
 
                         if (config.daily_reset) {
 
