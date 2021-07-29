@@ -72,11 +72,11 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
 
                         //Tageszähler
-                        var TodayGen = await adapter.getStateAsync('TodayGen');
-                        var TodayDemand = await adapter.getStateAsync('TodayDemand');
-                        var TodayFeedIn = await adapter.getStateAsync('TodayFeedIn');
-                        var TodayCharged = await adapter.getStateAsync('TodayCharged');
-                        var TodayDischarged = await adapter.getStateAsync('TodayDischarged');
+                        var TodayGen = await adapter.getStateAsync('TodayGen').val;
+                        var TodayDemand = await adapter.getStateAsync('TodayDemand').val;
+                        var TodayFeedIn = await adapter.getStateAsync('TodayFeedIn').val;
+                        var TodayCharged = await adapter.getStateAsync('TodayCharged').val;
+                        var TodayDischarged = await adapter.getStateAsync('TodayDischarged').val;
 
                         if (config.daily_reset) {
 
