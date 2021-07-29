@@ -1,9 +1,9 @@
 {
     "common": {
         "name": "qcells-qhome-ess-hyb-g2",
-        "version": "0.0.1",
+        "version": "1.0.0",
         "news": {
-            "0.0.1": {
+            "1.0.0": {
                 "en": "initial release",
                 "de": "Erstveröffentlichung",
                 "ru": "Начальная версия",
@@ -68,8 +68,9 @@
         ]
     },
     "native": {
-        "option1": true,
-        "option2": "42"
+        "hostname": "",
+        "batCapacity": "",
+        "uptInterval": ""
     },
     "objects": [],
     "instanceObjects": []
