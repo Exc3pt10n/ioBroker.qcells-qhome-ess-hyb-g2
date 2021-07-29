@@ -55,7 +55,11 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 var urlAPI = 'http://' + config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
 
                 //Daten abrufen
-                const response = await axios({ url: urlAPI, timeout: 500 });
+                try {
+                    const response = await axios({ url: urlAPI, timeout: 500 });
+                } catch (e) {
+                    adapter.log.error(e.message);
+                }
 
                 //JSON in Array umwandeln
                 var arrValues = JSON.parse(response.data);
