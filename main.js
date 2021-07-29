@@ -10,7 +10,7 @@ const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
-const axios = require('axios');
+const request = require('request');
 
 //global variables
 let adapter;
@@ -55,108 +55,35 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 var urlAPI = 'http://' + config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
 
                 //Daten abrufen
-                try {
-                    const response = await axios({ url: urlAPI, timeout: 500 });
-                } catch (e) {
-                    adapter.log.error(e.message);
-                }
+                request(urlAPI, function (err, state, body) {
+                    //JSON in Array umwandeln
+                    var arrValues = JSON.parse(body);
+                    //JSON in Array umwandeln
+                    var arrValues = JSON.parse(body);
 
-                //JSON in Array umwandeln
-                var arrValues = JSON.parse(response.data);
+                    //Batterieladung in kWh berechnen
+                    var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
+                    var BtCap = config.batCapacity * BtSoc / 100;
 
-                //Tageszähler aktualisieren
-                //Erforderliche Daten konvertieren
-                var PvPw = parseFloat(arrValues.ESSRealtimeStatus.PvPw);
-                var GridStusCd = parseInt(arrValues.ESSRealtimeStatus.GridStusCd);
-                var GridPw = parseFloat(arrValues.ESSRealtimeStatus.GridPw);
-                var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
-                var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
-
-                //Tageszähler
-                var TodayGen = await adapter.getStateAsync('TodayGen').val;
-                var TodayDemand = await adapter.getStateAsync('TodayDemand').val;
-                var TodayFeedIn = await adapter.getStateAsync('TodayFeedIn').val;
-                var TodayCharged = await adapter.getStateAsync('TodayCharged').val;
-                var TodayDischarged = await adapter.getStateAsync('TodayDischarged').val;
-
-                adapter.log.warn('Type TodayGen: ' + typeof (TodayGen));
-
-                //Zählerstände aktualisieren
-                TodayGen += (PvPw / (60 * 60)) * config.uptIntervall;
-
-                switch (GridStusCd) {
-                    //Demand
-                    case 0:
-                        TodayDemand += (GridPw / (60 * 60)) * config.uptIntervall;
-                        break;
-                    //FeedIn
-                    case 1:
-                        TodayFeedIn += (GridPw / (60 * 60)) * config.uptIntervall;
-                        break;
-                }
-
-                switch (BtStusCd) {
-                    //Entladen
-                    case 0:
-                        TodayDischarged += (BtPw / (60 * 60)) * config.uptIntervall;
-                        break;
-                    //Laden
-                    case 1:
-                        TodayCharged += (BtPw / (60 * 60)) * config.uptIntervall;
-                        break;
-                }
-
-                //Kosten/Erlöse berechnen
-                var TodayCost = TodayDemand * config.pBuy;
-                var TodayEarn = TodayFeedIn * config.pSell;
-
-                //Batterieladung in kWh berechnen
-                var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
-                var BtCap = config.batCapacity * BtSoc / 100;
-
-                //Batterielaufzeit
-                var BtLast = 0;
-
-                switch (BtStusCd) {
-                    //Entladen
-                    case 0:
-                        BtLast = Math.round(BtCap / BtPw * 60);
-                        break;
-                    //Laden
-                    case 1:
-                        BtLast = Math.round((config.batCapacity - BtCap) / BtPw * 60);
-                        break;
-                    //Geladen
-                    case 2:
-                        BtLast = 0;
-                        break;
-                }
-
-                //Datenpunkte aktualisieren
-                adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
-                adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
-                adapter.setState('GridPw', { val: GridPw, ack: true });
-                adapter.setState('ConsPw', { val: parseFloat(arrValues.ESSRealtimeStatus.ConsPw), ack: true });
-                adapter.setState('BtSoc', { val: BtSoc, ack: true });
-                adapter.setState('PcsPw', { val: arrValues.ESSRealtimeStatus.PcsPw, ack: true });
-                adapter.setState('AbsPcsPw', { val: arrValues.ESSRealtimeStatus.AbsPcsPw, ack: true });
-                adapter.setState('PvPw', { val: PvPw, ack: true });
-                adapter.setState('GridStusCd', { val: GridStusCd, ack: true });
-                adapter.setState('BtStusCd', { val: BtStusCd, ack: true });
-                adapter.setState('BtPw', { val: BtPw, ack: true });
-                adapter.setState('OperStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.OperStusCd), ack: true });
-                adapter.setState('EmsOpMode', { val: parseInt(arrValues.ESSRealtimeStatus.EmsOpMode), ack: true });
-                adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
-                adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
-                adapter.setState('BtCap', { val: BtCap, ack: true });
-                adapter.setState('BtLast', { val: BtLast, ack: true });
-                adapter.setState('TodayGen', { val: TodayGen, ack: true });
-                adapter.setState('TodayDemand', { val: TodayDemand, ack: true });
-                adapter.setState('TodayFeedIn', { val: TodayFeedIn, ack: true });
-                adapter.setState('TodayCharged', { val: TodayCharged, ack: true });
-                adapter.setState('TodayDischarged', { val: TodayDischarged, ack: true });
-                adapter.setState('TodayCost', { val: TodayCost, ack: true });
-                adapter.setState('TodayEarn', { val: TodayEarn, ack: true });
+                    //Datenpunkte aktualisieren
+                    adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
+                    adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
+                    adapter.setState('GridPw', { val: parseFloat(arrValues.ESSRealtimeStatus.GridPw), ack: true });
+                    adapter.setState('ConsPw', { val: parseFloat(arrValues.ESSRealtimeStatus.ConsPw), ack: true });
+                    adapter.setState('BtSoc', { val: BtSoc, ack: true });
+                    adapter.setState('PcsPw', { val: arrValues.ESSRealtimeStatus.PcsPw, ack: true });
+                    adapter.setState('AbsPcsPw', { val: arrValues.ESSRealtimeStatus.AbsPcsPw, ack: true });
+                    adapter.setState('PvPw', { val: parseFloat(arrValues.ESSRealtimeStatus.PvPw), ack: true });
+                    adapter.setState('GridStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.GridStusCd), ack: true });
+                    adapter.setState('BtStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.BtStusCd), ack: true });
+                    adapter.setState('BtPw', { val: parseFloat(arrValues.ESSRealtimeStatus.BtPw), ack: true });
+                    adapter.setState('OperStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.OperStusCd), ack: true });
+                    adapter.setState('EmsOpMode', { val: parseInt(arrValues.ESSRealtimeStatus.EmsOpMode), ack: true });
+                    adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
+                    adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
+                    adapter.setState('BtCap', { val: BtCap, ack: true });
+                    adapter.setState('BtLast', { val: BtLast, ack: true });
+                })
             }, interval);
         } catch (ex) {
             adapter.log.error(ex.message);
@@ -170,7 +97,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
     onUnload(callback) {
         try {
             clearInterval(main_interval)
-            reset_job.cancel();
             callback();
         } catch (e) {
             callback();
@@ -373,76 +299,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 name: 'RankPer',
                 type: 'number',
                 unit: ''
-            }
-        });
-
-        await adapter.setObjectNotExistsAsync('TodayDemand', {
-            type: 'state',
-            common: {
-                name: 'Heute bezogen',
-                type: 'number',
-                def: 0,
-                unit: 'kWh'
-            }
-        });
-
-        await adapter.setObjectNotExistsAsync('TodayFeedIn', {
-            type: 'state',
-            common: {
-                name: 'Heute eingespeist',
-                type: 'number',
-                def: 0,
-                unit: 'kWh'
-            }
-        });
-
-        await adapter.setObjectNotExistsAsync('TodayGen', {
-            type: 'state',
-            common: {
-                name: 'Heute generiert',
-                type: 'number',
-                def: 0,
-                unit: 'kWh'
-            }
-        });
-
-        await adapter.setObjectNotExistsAsync('TodayCharged', {
-            type: 'state',
-            common: {
-                name: 'Heute geladen',
-                type: 'number',
-                def: 0,
-                unit: 'kWh'
-            }
-        });
-
-        await adapter.setObjectNotExistsAsync('TodayDischarged', {
-            type: 'state',
-            common: {
-                name: 'Heute entladen',
-                type: 'number',
-                def: 0,
-                unit: 'kWh'
-            }
-        });
-
-        await adapter.setObjectNotExistsAsync('TodayCost', {
-            type: 'state',
-            common: {
-                name: 'Kosten Bezug',
-                type: 'number',
-                def: 0,
-                unit: 'Euro'
-            }
-        });
-
-        await adapter.setObjectNotExistsAsync('TodayEarn', {
-            type: 'state',
-            common: {
-                name: 'Erlös Verkauf',
-                type: 'number',
-                def: 0,
-                unit: 'Euro'
             }
         });
     };
