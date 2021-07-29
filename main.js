@@ -78,6 +78,12 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         var TodayCharged = await adapter.getStateAsync('TodayCharged').val;
                         var TodayDischarged = await adapter.getStateAsync('TodayDischarged').val;
 
+                        adapter.log.warn('TodayGen: ' + TodayGen);
+                        adapter.log.warn('TodayDemand: ' + TodayDemand);
+                        adapter.log.warn('TodayFeedIn: ' + TodayFeedIn);
+                        adapter.log.warn('TodayCharged: ' + TodayCharged);
+                        adapter.log.warn('TodayDischarged: ' + TodayDischarged);
+
                         if (config.daily_reset) {
 
                         } else {
@@ -450,8 +456,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                 unit: 'Euro'
             }
         });
-
-        return true;
     };
 }
 
