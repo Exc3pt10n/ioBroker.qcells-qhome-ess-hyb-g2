@@ -51,12 +51,12 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
         //Daten abrufen
         try {
-            main_interval = setInterval(function () {
+            main_interval = setInterval(async function () {
                 //URL
                 var urlAPI = 'http://' + config.hostname + '/R3EMSAPP_REAL.ems?file=ESSRealtimeStatus.json';
 
                 //Daten abrufen
-                request(urlAPI, function (err, state, body) {
+                request(urlAPI, async function (err, state, body) {
                     if (err) {
                         adapter.log.error(err);
                     } else {
@@ -72,11 +72,11 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                         var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
 
                         //Tageszähler
-                        var TodayGen = adapter.getStateAsync('TodayGen');
-                        var TodayDemand = adapter.getStateAsync('TodayDemand');
-                        var TodayFeedIn = adapter.getStateAsync('TodayFeedIn');
-                        var TodayCharged = adapter.getStateAsync('TodayCharged');
-                        var TodayDischarged = adapter.getStateAsync('TodayDischarged');
+                        var TodayGen = await adapter.getStateAsync('TodayGen');
+                        var TodayDemand = await adapter.getStateAsync('TodayDemand');
+                        var TodayFeedIn = await adapter.getStateAsync('TodayFeedIn');
+                        var TodayCharged = await adapter.getStateAsync('TodayCharged');
+                        var TodayDischarged = await adapter.getStateAsync('TodayDischarged');
 
                         if (config.daily_reset) {
 
