@@ -16,7 +16,6 @@ const request = require('request');
 let adapter;
 let config;
 let main_interval;
-let reset_job;
 
 class QcellsQhomeEssHybG2 extends utils.Adapter {
     /**
@@ -60,8 +59,6 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
 
                 //Daten abrufen
                 request(urlAPI, function (err, state, body) {
-                    //JSON in Array umwandeln
-                    var arrValues = JSON.parse(body);
                     //JSON in Array umwandeln
                     var arrValues = JSON.parse(body);
 
