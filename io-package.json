@@ -1,13 +1,9 @@
 {
     "common": {
         "name": "qcells-qhome-ess-hyb-g2",
-        "version": "0.0.2",
+        "version": "1.0.0",
         "news": {
-            "0.0.2": {
-                "en": "add adapter logic",
-                "de": "Adapterlogik ergänzt"
-            },
-            "0.0.1": {
+            "1.0.0": {
                 "en": "initial release",
                 "de": "Erstveröffentlichung",
                 "ru": "Начальная версия",

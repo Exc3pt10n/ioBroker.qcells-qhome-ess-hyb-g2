@@ -1,6 +1,6 @@
 {
   "name": "iobroker.qcells-qhome-ess-hyb-g2",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Get live data from your Q.Cells inverter",
   "author": {
     "name": "Exc3pt10n",
