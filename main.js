@@ -69,6 +69,26 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     var BtSoc = parseFloat(arrValues.ESSRealtimeStatus.BtSoc)
                     var BtCap = config.batCapacity * BtSoc / 100;
 
+                    //Verbleibende Batterielaufzeit berechnen
+                    var BtStusCd = parseInt(arrValues.ESSRealtimeStatus.BtStusCd);
+                    var BtPw = parseFloat(arrValues.ESSRealtimeStatus.BtPw);
+                    var BtLast = 0;
+
+                    switch (BtStusCd) {
+                        //Entladen
+                        case 0:
+                            BtLast = Math.round(BtCap / BtPw * 60);
+                            break;
+                        //Laden
+                        case 1:
+                            BtLast = Math.round((config.batCapacity - BtCap) / BtPw * 60);
+                            break;
+                        //Geladen
+                        case 2:
+                            BtLast = 0;
+                            break;
+                    }
+
                     //Datenpunkte aktualisieren
                     adapter.setState('ColecTm', { val: adapter.transform_Timestamp(arrValues.ESSRealtimeStatus.ColecTm), ack: true });
                     adapter.setState('PowerOutletPw', { val: parseInt(arrValues.ESSRealtimeStatus.PowerOutletPw), ack: true });
@@ -79,13 +99,14 @@ class QcellsQhomeEssHybG2 extends utils.Adapter {
                     adapter.setState('AbsPcsPw', { val: arrValues.ESSRealtimeStatus.AbsPcsPw, ack: true });
                     adapter.setState('PvPw', { val: parseFloat(arrValues.ESSRealtimeStatus.PvPw), ack: true });
                     adapter.setState('GridStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.GridStusCd), ack: true });
-                    adapter.setState('BtStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.BtStusCd), ack: true });
-                    adapter.setState('BtPw', { val: parseFloat(arrValues.ESSRealtimeStatus.BtPw), ack: true });
+                    adapter.setState('BtStusCd', { val: BtStusCd, ack: true });
+                    adapter.setState('BtPw', { val: BtPw, ack: true });
                     adapter.setState('OperStusCd', { val: parseInt(arrValues.ESSRealtimeStatus.OperStusCd), ack: true });
                     adapter.setState('EmsOpMode', { val: parseInt(arrValues.ESSRealtimeStatus.EmsOpMode), ack: true });
                     adapter.setState('RankPer', { val: parseInt(arrValues.ESSRealtimeStatus.RankPer), ack: true });
                     adapter.setState('ErrorCnt', { val: arrValues.ESSRealtimeStatus.ErrorCnt, ack: true });
                     adapter.setState('BtCap', { val: BtCap, ack: true });
+                    adapter.setState('BtLast', { val: BtLast, ack: true });
                 })
             }, interval);
         } catch (ex) {
